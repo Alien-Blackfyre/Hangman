@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لعبة المشنقة السحرية - هجوم الديمنتور</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;700&display=swap');
+
+        body {
+            background-color: #111;
+            color: #ecb939; /* أصفر هافلباف المميز */
+            font-family: 'Cairo', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background-image: radial-gradient(circle, #1a1a1a 0%, #000000 100%);
+        }
+
+        h1 {
+            font-family: 'Amiri', serif;
+            font-size: 3em;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 4px rgba(236, 185, 57, 0.4);
+        }
+
+        .subtitle {
+            color: #a0a0a0;
+            margin-bottom: 30px;
+        }
+
+        /* شريط اقتراب الديمنتور */
+        #dementor-status {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #ff4c4c;
+        }
+
+        #progress-bar {
+            width: 80%;
+            max-width: 500px;
+            height: 25px;
+            background-color: #333;
+            border: 2px solid #ecb939;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 30px;
+            box-shadow: 0 0 10px rgba(236, 185, 57, 0.2);
+        }
+
+        #progress-fill {
+            height: 100%;
+            width: 0%;
+            background-color: #ff4c4c;
+            transition: width 0.5s ease-in-out;
+        }
+
+        /* الكلمة المخفية */
+        #word-display {
+            font-size: 3em;
+            letter-spacing: 15px;
+            margin-bottom: 40px;
+            font-weight: bold;
+            font-family: monospace;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+            direction: ltr; /* الحروف الإنجليزية */
+        }
+
+        /* لوحة المفاتيح */
+        #keyboard {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            max-width: 600px;
+            direction: ltr;
+        }
+
+        .key {
+            background-color: #222;
+            color: #ecb939;
+            border: 2px solid #ecb939;
+            border-radius: 8px;
+            width: 45px;
+            height: 45px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .key:hover {
+            background-color: #ecb939;
+            color: #111;
+        }
+
+        .key:disabled {
+            background-color: #111;
+            border-color: #444;
+            color: #444;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .key.correct {
+            background-color: #2a623d; /* لون سليذرين كعلامة للصح */
+            color: white;
+            border-color: #2a623d;
+        }
+
+        .key.wrong {
+            background-color: #ae0001; /* لون جريفندور كعلامة للخطأ */
+            color: white;
+            border-color: #ae0001;
+        }
+
+        /* رسالة النهاية */
+        #message-container {
+            margin-top: 30px;
+            font-size: 1.8em;
+            font-weight: bold;
+            height: 40px;
+        }
+
+        #restart-btn {
+            margin-top: 20px;
+            padding: 10px 25px;
+            font-size: 1.2em;
+            background-color: #ecb939;
+            color: #111;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Cairo', sans-serif;
+            font-weight: bold;
+            display: none;
+        }
+        
+        #restart-btn:hover {
+            background-color: #fce38a;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>فك التعويذة</h1>
+    <div class="subtitle">أنقذ الموقف قبل أن يصل الديمنتور إليك!</div>
+
+    <div id="dementor-status">الديمنتور على بُعد 6 خطوات...</div>
+    <div id="progress-bar">
+        <div id="progress-fill"></div>
+    </div>
+
+    <div id="word-display"></div>
+
+    <div id="keyboard"></div>
+
+    <div id="message-container"></div>
+    <button id="restart-btn" onclick="initGame()">تعويذة جديدة (إعادة)</button>
+
+    <script>
+        // قائمة الكلمات (تعاويذ، أسماء، أماكن من هاري بوتر)
+        const wordList = [
+            "EXPELLIARMUS",
+            "LUMOS",
+            "HUFFLEPUFF",
+            "DEMENTOR",
+            "HOGWARTS",
+            "QUIDDITCH",
+            "PATRONUS",
+            "HORCRUX",
+            "VOLDEMORT",
+            "ALOHOMORA"
+        ];
+
+        let chosenWord = "";
+        let guessedLetters = [];
+        let mistakes = 0;
+        const maxMistakes = 6;
+
+        function initGame() {
+            // اختيار كلمة عشوائية
+            chosenWord = wordList[Math.floor(Math.random() * wordList.length)];
+            guessedLetters = [];
+            mistakes = 0;
+
+            document.getElementById("message-container").innerText = "";
+            document.getElementById("restart-btn").style.display = "none";
+            updateDementorStatus();
+            createKeyboard();
+            updateWordDisplay();
+        }
+
+        function createKeyboard() {
+            const keyboardDiv = document.getElementById("keyboard");
+            keyboardDiv.innerHTML = "";
+            
+            // إنشاء أزرار الحروف الإنجليزية
+            for (let i = 65; i <= 90; i++) {
+                const letter = String.fromCharCode(i);
+                const button = document.createElement("button");
+                button.innerText = letter;
+                button.classList.add("key");
+                button.id = "key-" + letter;
+                button.addEventListener("click", () => handleGuess(letter));
+                keyboardDiv.appendChild(button);
+            }
+        }
+
+        function handleGuess(letter) {
+            if (guessedLetters.includes(letter) || mistakes >= maxMistakes) return;
+
+            guessedLetters.push(letter);
+            const button = document.getElementById("key-" + letter);
+            button.disabled = true;
+
+            if (chosenWord.includes(letter)) {
+                button.classList.add("correct");
+                updateWordDisplay();
+                checkWin();
+            } else {
+                button.classList.add("wrong");
+                mistakes++;
+                updateDementorStatus();
+                checkLoss();
+            }
+        }
+
+        function updateWordDisplay() {
+            let display = "";
+            for (let char of chosenWord) {
+                if (guessedLetters.includes(char)) {
+                    display += char;
+                } else {
+                    display += "_";
+                }
+            }
+            document.getElementById("word-display").innerText = display;
+        }
+
+        function updateDementorStatus() {
+            const stepsLeft = maxMistakes - mistakes;
+            const statusText = document.getElementById("dementor-status");
+            const progressFill = document.getElementById("progress-fill");
+
+            if (stepsLeft > 0) {
+                statusText.innerText = `الديمنتور على بُعد ${stepsLeft} خطوات...`;
+                progressFill.style.width = `${(mistakes / maxMistakes) * 100}%`;
+            }
+        }
+
+        function checkWin() {
+            const currentDisplay = document.getElementById("word-display").innerText;
+            if (!currentDisplay.includes("_")) {
+                document.getElementById("message-container").innerText = "أحسنت! لقد أطلقت الباتروناس بنجاح 🦌✨";
+                document.getElementById("message-container").style.color = "#ecb939";
+                endGame();
+            }
+        }
+
+        function checkLoss() {
+            if (mistakes === maxMistakes) {
+                document.getElementById("dementor-status").innerText = "لقد وصل الديمنتور!";
+                document.getElementById("progress-fill").style.width = "100%";
+                document.getElementById("message-container").innerText = `فشلت التعويذة! الكلمة كانت: ${chosenWord}`;
+                document.getElementById("message-container").style.color = "#ff4c4c";
+                
+                // إظهار الكلمة كاملة
+                document.getElementById("word-display").innerText = chosenWord;
+                endGame();
+            }
+        }
+
+        function endGame() {
+            // تعطيل كل الأزرار
+            const keys = document.getElementsByClassName("key");
+            for (let key of keys) {
+                key.disabled = true;
+            }
+            // إظهار زر الإعادة
+            document.getElementById("restart-btn").style.display = "block";
+        }
+
+        // تشغيل اللعبة عند فتح الصفحة
+        initGame();
+    </script>
+</body>
+</html>
