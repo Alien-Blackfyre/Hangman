@@ -166,6 +166,11 @@
         // قائمة الكلمات (تعاويذ، أسماء، أماكن من هاري بوتر)
         const wordList = [
             "EXPELLIARMUS",
+            "SNAPE",
+            "EXPECTO PATRONUM",
+            "RON WEASLEY",
+            "HARRY POTTER",
+            "ALBUS DUMBLEDORE",
             "LUMOS",
             "HUFFLEPUFF",
             "DEMENTOR",
@@ -256,7 +261,7 @@
         function checkWin() {
             const currentDisplay = document.getElementById("word-display").innerText;
             if (!currentDisplay.includes("_")) {
-                document.getElementById("message-container").innerText = "أحسنت! لقد أطلقت الباتروناس بنجاح 🦌✨";
+                document.getElementById("message-container").innerText = "EXPECTOOOOOO PATRONUMMMMMMMM!! برافو لحقت نفسك من الديمنتور";
                 document.getElementById("message-container").style.color = "#ecb939";
                 endGame();
             }
