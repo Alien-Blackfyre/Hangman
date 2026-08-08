@@ -236,16 +236,20 @@
         }
 
         function updateWordDisplay() {
-            let display = "";
-            for (let char of chosenWord) {
-                if (guessedLetters.includes(char)) {
-                    display += char;
-                } else {
-                    display += "_";
-                }
-            }
-            document.getElementById("word-display").innerText = display;
+    let display = "";
+    for (let char of chosenWord) {
+        if (char === " ") {
+            // لو الحرف عبارة عن مسافة، هنحط مسافة برمجية واسعة عشان تفصل بين الكلمتين
+            display += "&nbsp;&nbsp;&nbsp;"; 
+        } else if (guessedLetters.includes(char)) {
+            display += char;
+        } else {
+            display += "_";
         }
+    }
+    // استخدمنا innerHTML بدل innerText عشان المسافات البرمجية تظهر صح
+    document.getElementById("word-display").innerHTML = display; 
+}
 
         function updateDementorStatus() {
             const stepsLeft = maxMistakes - mistakes;
@@ -258,14 +262,15 @@
             }
         }
 
-        function checkWin() {
-            const currentDisplay = document.getElementById("word-display").innerText;
-            if (!currentDisplay.includes("_")) {
-                document.getElementById("message-container").innerText = "EXPECTOOOOOO PATRONUMMMMMMMM!! برافو لحقت نفسك من الديمنتور";
-                document.getElementById("message-container").style.color = "#ecb939";
-                endGame();
-            }
-        }
+       function checkWin() {
+    const currentDisplay = document.getElementById("word-display").innerHTML;
+    // لو الكلمة المعروضة مابقاش فيها أي شرطة _ ده معناه إن كل الحروف اتعرفت
+    if (!currentDisplay.includes("_")) {
+        document.getElementById("message-container").innerText = "أحسنت! لقد أطلقت الباتروناس بنجاح 🦌✨";
+        document.getElementById("message-container").style.color = "#ecb939";
+        endGame();
+    }
+}
 
         function checkLoss() {
             if (mistakes === maxMistakes) {
